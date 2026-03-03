@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, Annotated
 from datetime import datetime, timezone
-from enum import Enum
+from enum import EnumBelow tonight
 import time
 import os
 import re
