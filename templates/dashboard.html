@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Threshold ML — Text Analysis Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090f;--bg2:#111118;--card:#15151e;--card-h:#1b1b28;--input:#191924;
+  --bdr:#252535;--bdr-f:#4f6ef7;
+  --t1:#f0f0f5;--t2:#8888a0;--t3:#555570;
+  --accent:#4f6ef7;--accent-g:rgba(79,110,247,.12);--accent-h:#6583ff;
+  --ok:#34d399;--ok-bg:rgba(52,211,153,.08);
+  --err:#f87171;--err-bg:rgba(248,113,113,.08);
+  --warn:#fbbf24;--warn-bg:rgba(251,191,36,.08);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,.08);
+  --r:14px;--rs:10px;--rx:7px;
+  --tr:.2s cubic-bezier(.4,0,.2,1);
+  --f:'DM Sans',-apple-system,sans-serif;
+  --fm:'JetBrains Mono','SF Mono',monospace;
+}
+html{font-size:15px}
+body{font-family:var(--f);background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;top:-40%;left:-20%;width:80vw;height:80vw;background:radial-gradient(circle,rgba(79,110,247,.05)0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-30%;right:-10%;width:60vw;height:60vw;background:radial-gradient(circle,rgba(52,211,153,.03)0%,transparent 70%);pointer-events:none;z-index:0}
+
+.app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:2rem 1.5rem 4rem}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0 2rem}
+.logo{display:flex;align-items:center;gap:.75rem}
+.logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;box-shadow:0 2px 12px rgba(79,110,247,.3)}
+.logo-text{font-size:1.15rem;font-weight:600;letter-spacing:-.02em}
+.logo-text span{color:var(--t3);font-weight:400;margin-left:.3rem;font-size:.82rem}
+.header-links{display:flex;gap:.4rem}
+.header-links a{padding:.42rem .9rem;border-radius:var(--rx);font-size:.78rem;font-weight:500;text-decoration:none;color:var(--t2);transition:var(--tr);border:1px solid transparent}
+.header-links a:hover{color:var(--t1);background:var(--card);border-color:var(--bdr)}
+.header-links a.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.header-links a.primary:hover{background:var(--accent-h)}
+
+/* Hero */
+.hero{text-align:center;padding:1.5rem 0 2.5rem}
+.hero h1{font-size:2.6rem;font-weight:700;letter-spacing:-.04em;line-height:1.1;background:linear-gradient(135deg,var(--t1) 0%,var(--t2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--t2);font-size:.95rem;margin-top:.6rem;line-height:1.6;max-width:580px;margin-inline:auto}
+.hero .tech-badges{display:flex;justify-content:center;gap:.4rem;margin-top:1rem}
+.tech-badge{padding:.3rem .75rem;border-radius:99px;font-size:.7rem;font-weight:600;letter-spacing:.04em;border:1px solid var(--bdr);color:var(--t2);background:var(--card)}
+.tech-badge.lang{border-color:rgba(79,110,247,.3);color:var(--accent);background:var(--accent-g)}
+.tech-badge.fast{border-color:rgba(52,211,153,.3);color:var(--ok);background:var(--ok-bg)}
+.tech-badge.py{border-color:rgba(251,191,36,.3);color:var(--warn);background:var(--warn-bg)}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.5rem}
+.stat-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:1.1rem 1.2rem;transition:var(--tr)}
+.stat-card:hover{background:var(--card-h);border-color:rgba(79,110,247,.15)}
+.stat-label{font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:.4rem}
+.stat-value{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.stat-value.ok{color:var(--ok)}.stat-value.err{color:var(--err)}.stat-value.accent{color:var(--accent)}.stat-value.warn{color:var(--warn)}
+.stat-sub{font-size:.68rem;color:var(--t3);margin-top:.25rem}
+
+/* Grid */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:1.4rem 1.5rem;transition:var(--tr)}
+.card:hover{border-color:rgba(79,110,247,.12)}
+.card-title{font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem}
+.card-title .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+/* Inputs */
+textarea,input[type="number"]{width:100%;padding:.75rem .9rem;background:var(--input);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--t1);font-family:var(--f);font-size:.88rem;transition:var(--tr);outline:none;resize:vertical}
+textarea:focus,input[type="number"]:focus{border-color:var(--bdr-f);box-shadow:0 0 0 3px var(--accent-g)}
+textarea{min-height:90px;line-height:1.6}
+input[type="number"]{max-width:110px}
+.input-group{margin-bottom:.9rem}
+.input-group label{display:block;font-size:.7rem;font-weight:500;color:var(--t3);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.05em}
+
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.65rem 1.3rem;border-radius:var(--rs);font-family:var(--f);font-size:.82rem;font-weight:600;border:none;cursor:pointer;transition:var(--tr)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(79,110,247,.25)}
+.btn-primary:hover{background:var(--accent-h);transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,110,247,.35)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--input);color:var(--t2);border:1px solid var(--bdr)}
+.btn-secondary:hover{background:var(--card-h);color:var(--t1)}
+.btn-row{display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap}
+
+/* Result */
+.result-panel{margin-top:1.1rem;padding:1.1rem;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--input);display:none}
+.result-panel.visible{display:block;animation:fadeSlide .35s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.result-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .8rem;border-radius:99px;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.8rem}
+.result-badge.spam{background:var(--err-bg);color:var(--err);border:1px solid rgba(248,113,113,.2)}
+.result-badge.ham{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(52,211,153,.2)}
+
+.result-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem}
+.result-metric-label{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.result-metric-value{font-size:1rem;font-weight:600;margin-top:.1rem;font-family:var(--fm);letter-spacing:-.02em}
+
+/* Confidence bar */
+.conf-bar-bg{height:5px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;margin-top:.8rem}
+.conf-bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.conf-bar-fill.spam{background:linear-gradient(90deg,var(--err),#fb923c)}
+.conf-bar-fill.ham{background:linear-gradient(90deg,var(--ok),#6ee7b7)}
+
+/* ── Graph Execution Trace ──────────────────────────── */
+.graph-trace{margin-top:1rem}
+.trace-node{display:flex;align-items:center;gap:.6rem;padding:.45rem 0;position:relative}
+.trace-node::before{content:'';position:absolute;left:11px;top:28px;bottom:-8px;width:1px;background:var(--bdr)}
+.trace-node:last-child::before{display:none}
+.trace-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;z-index:1}
+.trace-dot.done{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(52,211,153,.3)}
+.trace-dot.route{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(167,139,250,.3)}
+.trace-dot.pending{background:rgba(255,255,255,.03);color:var(--t3);border:1px solid var(--bdr)}
+.trace-name{font-size:.78rem;font-weight:500;color:var(--t1)}
+.trace-time{font-size:.7rem;font-family:var(--fm);color:var(--t3);margin-left:auto}
+
+/* ── Risk Badge ─────────────────────────────────────── */
+.risk-badge{display:inline-flex;padding:.25rem .65rem;border-radius:99px;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.risk-badge.low{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(52,211,153,.2)}
+.risk-badge.medium{background:var(--warn-bg);color:var(--warn);border:1px solid rgba(251,191,36,.2)}
+.risk-badge.high{background:var(--err-bg);color:var(--err);border:1px solid rgba(248,113,113,.2)}
+
+/* ── Endpoint List ──────────────────────────────────── */
+.endpoint-list{display:flex;flex-direction:column;gap:.5rem}
+.endpoint-item{display:flex;align-items:center;gap:.65rem;padding:.6rem .8rem;background:var(--input);border-radius:var(--rx);border:1px solid transparent;transition:var(--tr)}
+.endpoint-item:hover{border-color:var(--bdr);background:var(--card-h)}
+.method-badge{padding:.18rem .5rem;border-radius:5px;font-size:.62rem;font-weight:700;font-family:var(--fm);letter-spacing:.04em;min-width:40px;text-align:center}
+.method-badge.get{background:rgba(52,211,153,.1);color:var(--ok)}
+.method-badge.post{background:rgba(79,110,247,.1);color:var(--accent)}
+.endpoint-path{font-family:var(--fm);font-size:.78rem;color:var(--t1);font-weight:500}
+.endpoint-desc{font-size:.7rem;color:var(--t3);margin-left:auto}
+
+/* ── Code ───────────────────────────────────────────── */
+.code-block{background:#0c0c14;border:1px solid var(--bdr);border-radius:var(--rs);padding:1rem 1.1rem;font-family:var(--fm);font-size:.74rem;line-height:1.8;overflow-x:auto;color:var(--t2);position:relative;white-space:pre}
+.code-block .kw{color:#c084fc}.code-block .str{color:#34d399}.code-block .num{color:#fbbf24}.code-block .cmt{color:#3a3a50}
+.code-tabs{display:flex;gap:0;margin-bottom:0}
+.code-tab{padding:.42rem .85rem;font-size:.68rem;font-weight:500;background:transparent;border:1px solid var(--bdr);border-bottom:none;color:var(--t3);cursor:pointer;border-radius:var(--rx) var(--rx) 0 0;transition:var(--tr);font-family:var(--fm)}
+.code-tab.active{background:#0c0c14;color:var(--t1)}
+.code-block.with-tabs{border-top-left-radius:0}
+
+/* ── History ────────────────────────────────────────── */
+.history-row{display:grid;grid-template-columns:1fr auto auto auto auto;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.02);font-size:.76rem;align-items:center;gap:.75rem}
+.history-row.header{color:var(--t3);font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;border-bottom-color:var(--bdr)}
+.mini-badge{padding:.12rem .45rem;border-radius:99px;font-size:.65rem;font-weight:600}
+.mini-badge.spam{background:var(--err-bg);color:var(--err)}
+.mini-badge.ham{background:var(--ok-bg);color:var(--ok)}
+.mini-badge.n-a{background:rgba(255,255,255,.03);color:var(--t3)}
+
+/* Spinner */
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+.spinner.active{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Footer */
+.footer{text-align:center;padding:2.5rem 0 1rem;color:var(--t3);font-size:.72rem}
+.footer a{color:var(--accent);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media(max-width:768px){.stats-row{grid-template-columns:1fr 1fr}.main-grid{grid-template-columns:1fr}.hero h1{font-size:1.8rem}.header{flex-direction:column;gap:.8rem}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">T</div>
+    <div class="logo-text">Threshold ML<span>Agent API</span></div>
+  </div>
+  <div class="header-links">
+    <a href="/docs" target="_blank">Swagger</a>
+    <a href="/redoc" target="_blank">ReDoc</a>
+    <a href="/graph/info" target="_blank">Graph</a>
+    <a href="/health" target="_blank">Health</a>
+    <a href="/docs" target="_blank" class="primary">API Docs →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Text Analysis Agent</h1>
+  <p>A multi-step AI agent with conditional routing, stateful graph execution, and real-time streaming — built with the LangGraph pattern and served via FastAPI.</p>
+  <div class="tech-badges">
+    <span class="tech-badge lang">LangGraph</span>
+    <span class="tech-badge fast">FastAPI</span>
+    <span class="tech-badge py">Python</span>
+  </div>
+</section>
+
+<section class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Status</div>
+    <div class="stat-value ok" id="statusVal">● Healthy</div>
+    <div class="stat-sub" id="uptimeSub">Loading...</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Analyses Run</div>
+    <div class="stat-value accent" id="totalPreds">0</div>
+    <div class="stat-sub">this session</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Spam Detected</div>
+    <div class="stat-value err" id="spamCount">0</div>
+    <div class="stat-sub" id="spamRate">0% of total</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg Latency</div>
+    <div class="stat-value" id="avgLatency">—</div>
+    <div class="stat-sub">ms per analysis</div>
+  </div>
+</section>
+
+<div class="main-grid">
+
+  <!-- Left: Try It -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Analyze Text</div>
+    <div class="input-group">
+      <label>Message</label>
+      <textarea id="inputText" placeholder="Type or paste a message...">URGENT! You've won $5,000 cash! Click www.claim-prize.com NOW to collect your FREE reward!!!</textarea>
+    </div>
+    <div class="input-group">
+      <label>Spam Threshold</label>
+      <input type="number" id="inputThreshold" value="0.5" min="0" max="1" step="0.05">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()">
+        <span id="spinner" class="spinner"></span>Run Agent
+      </button>
+      <button class="btn btn-secondary" onclick="loadEx('spam')">Spam</button>
+      <button class="btn btn-secondary" onclick="loadEx('biz')">Business</button>
+      <button class="btn btn-secondary" onclick="loadEx('personal')">Personal</button>
+    </div>
+
+    <!-- Result -->
+    <div class="result-panel" id="resultPanel">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap">
+        <div class="result-badge" id="resultBadge"></div>
+        <div class="risk-badge" id="riskBadge"></div>
+        <div style="margin-left:auto;font-size:.72rem;color:var(--t3)">Intent: <strong id="resIntent" style="color:var(--t2)"></strong></div>
+      </div>
+      <div class="result-metrics">
+        <div><div class="result-metric-label">Confidence</div><div class="result-metric-value" id="resConf">—</div></div>
+        <div><div class="result-metric-label">Spam Prob</div><div class="result-metric-value" id="resProb">—</div></div>
+        <div><div class="result-metric-label">Sentiment</div><div class="result-metric-value" id="resSent">—</div></div>
+      </div>
+      <div class="conf-bar-bg" style="margin-top:.7rem"><div class="conf-bar-fill" id="confBar"></div></div>
+
+      <!-- Graph Trace -->
+      <div class="graph-trace" id="graphTrace"></div>
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div style="display:flex;flex-direction:column;gap:.7rem">
+    <!-- Endpoints -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>API Endpoints</div>
+      <div class="endpoint-list">
+        <div class="endpoint-item"><span class="method-badge get">GET</span><span class="endpoint-path">/health</span><span class="endpoint-desc">System health</span></div>
+        <div class="endpoint-item"><span class="method-badge get">GET</span><span class="endpoint-path">/graph/info</span><span class="endpoint-desc">Graph topology</span></div>
+        <div class="endpoint-item"><span class="method-badge post">POST</span><span class="endpoint-path">/analyze</span><span class="endpoint-desc">Full agent analysis</span></div>
+        <div class="endpoint-item"><span class="method-badge post">POST</span><span class="endpoint-path">/classify</span><span class="endpoint-desc">Quick classify</span></div>
+        <div class="endpoint-item"><span class="method-badge post">POST</span><span class="endpoint-path">/analyze/batch</span><span class="endpoint-desc">Batch (up to 20)</span></div>
+        <div class="endpoint-item"><span class="method-badge post">POST</span><span class="endpoint-path">/analyze/stream</span><span class="endpoint-desc">Streaming nodes</span></div>
+        <div class="endpoint-item"><span class="method-badge get">GET</span><span class="endpoint-path">/stats</span><span class="endpoint-desc">Aggregated stats</span></div>
+      </div>
+    </div>
+
+    <!-- Code Examples -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Quick Start</div>
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="switchTab(this,'python')">Python</button>
+        <button class="code-tab" onclick="switchTab(this,'curl')">cURL</button>
+        <button class="code-tab" onclick="switchTab(this,'stream')">Stream</button>
+      </div>
+      <div class="code-block with-tabs" id="codeBlock"><span id="code-python"><span class="kw">import</span> requests
+
+<span class="cmt"># Full agent analysis</span>
+res = requests.post(
+    <span class="str">"http://localhost:8000/analyze"</span>,
+    json={<span class="str">"text"</span>: <span class="str">"Click here to win!"</span>}
+)
+report = res.json()
+<span class="kw">print</span>(report[<span class="str">"detected_intent"</span>])
+<span class="kw">print</span>(report[<span class="str">"risk_assessment"</span>])
+<span class="kw">print</span>(report[<span class="str">"graph_execution"</span>])</span><span id="code-curl" style="display:none">curl -X POST http://localhost:8000/analyze \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"text": "Meeting at 3pm tomorrow"}'</span>
+
+<span class="cmt"># Quick classify endpoint</span>
+curl -X POST http://localhost:8000/classify \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"text": "You won a free car!"}'</span></span><span id="code-stream" style="display:none"><span class="cmt"># Stream node-by-node execution</span>
+<span class="kw">import</span> requests, json
+
+res = requests.post(
+    <span class="str">"http://localhost:8000/analyze/stream"</span>,
+    json={<span class="str">"text"</span>: <span class="str">"Urgent offer!"</span>},
+    stream=<span class="kw">True</span>
+)
+<span class="kw">for</span> line <span class="kw">in</span> res.iter_lines():
+    node = json.loads(line)
+    <span class="kw">print</span>(f<span class="str">"✓ {node['node']}"</span>)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- History -->
+<div class="card" style="margin-top:.7rem">
+  <div class="card-title"><span class="dot"></span>Analysis History</div>
+  <div class="history-row header">
+    <div>Text</div><div>Spam</div><div>Sentiment</div><div>Risk</div><div>Nodes</div>
+  </div>
+  <div id="historyRows" style="color:var(--t3);font-size:.8rem;padding:.8rem 0;text-align:center">
+    No analyses yet — try running the agent above.
+  </div>
+</div>
+
+<footer class="footer">Built by <a href="#">Candace Grant</a> · Threshold ML Solutions, LLC · <a href="/docs">LangGraph</a> + <a href="/docs">FastAPI</a> + Python</footer>
+</div>
+
+<script>
+const examples = {
+  spam: [
+    "URGENT! You've won $5,000 cash! Click www.claim-prize.com NOW to collect your FREE reward!!!",
+    "Make $10,000/week from home! No experience needed. 100% risk free. Subscribe at bit.ly/money NOW!",
+    "Congratulations!!! You are our LUCKY WINNER. Claim your FREE iPhone at www.getprize.com. Limited time offer, act now!"
+  ],
+  biz: [
+    "Hi team, I've attached the Q3 quarterly report for your review. Let's discuss the budget proposal in our meeting at 3pm tomorrow. Please follow up with any questions regarding the project deadline.",
+    "Regarding the strategy update — the data analysis results are in. I'd like to schedule a review meeting to discuss our quarterly targets and the proposal from the finance team.",
+    "Please review the attached project schedule. The deadline for the deliverable is March 15. I've updated the agenda for tomorrow's team meeting to include the budget discussion."
+  ],
+  personal: [
+    "Hey! Hope you're doing well. Miss you so much! Let's plan a dinner this weekend for your birthday. Love you!",
+    "Just wanted to say thank you for everything. I'm so excited about our vacation next month. It's going to be amazing!",
+    "I'm feeling a bit worried about the family reunion this weekend, but I'm also really happy we get to see everyone."
+  ]
+};
+
+function loadEx(type){
+  const list = examples[type];
+  document.getElementById('inputText').value = list[Math.floor(Math.random()*list.length)];
+}
+
+async function runAnalysis(){
+  const text = document.getElementById('inputText').value.trim();
+  if(!text) return;
+  const threshold = parseFloat(document.getElementById('inputThreshold').value)||0.5;
+  const btn = document.getElementById('analyzeBtn');
+  const sp = document.getElementById('spinner');
+  btn.disabled=true; sp.classList.add('active');
+
+  try{
+    const res = await fetch('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,threshold})});
+    const data = await res.json();
+    showResult(data);
+    addHistory(data);
+    refreshStats();
+  }catch(e){console.error(e)}
+  finally{btn.disabled=false;sp.classList.remove('active')}
+}
+
+function showResult(d){
+  const panel=document.getElementById('resultPanel');
+  const badge=document.getElementById('resultBadge');
+  const spam=d.spam_analysis||{};
+  const sent=d.sentiment_analysis||{};
+  const risk=d.risk_assessment||{};
+  const graph=d.graph_execution||{};
+  const isSpam=spam.prediction==='spam';
+
+  if(spam.prediction){
+    badge.textContent=isSpam?'⚠ Spam':'✓ Ham';
+    badge.className='result-badge '+(spam.prediction);
+  } else {
+    badge.textContent='— No Spam Check';
+    badge.className='result-badge ham';
+  }
+
+  const rb=document.getElementById('riskBadge');
+  rb.textContent='Risk: '+(risk.risk_level||'low');
+  rb.className='risk-badge '+(risk.risk_level||'low');
+
+  document.getElementById('resIntent').textContent=d.detected_intent||'—';
+  document.getElementById('resConf').textContent=spam.confidence?(spam.confidence*100).toFixed(1)+'%':'—';
+  document.getElementById('resProb').textContent=spam.spam_probability?(spam.spam_probability*100).toFixed(1)+'%':'—';
+  document.getElementById('resSent').textContent=sent.sentiment||'—';
+
+  const bar=document.getElementById('confBar');
+  bar.className='conf-bar-fill '+(isSpam?'spam':'ham');
+  bar.style.width=(spam.spam_probability||0)*100+'%';
+
+  // Graph trace
+  const trace=document.getElementById('graphTrace');
+  const nodes=graph.nodes_executed||[];
+  const times=graph.node_timings_ms||{};
+  trace.innerHTML='<div style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:.5rem;margin-top:.4rem">Graph Execution Trace</div>'+
+    nodes.map(n=>`<div class="trace-node"><div class="trace-dot done">✓</div><div class="trace-name">${n}</div><div class="trace-time">${times[n]!==undefined?times[n]+'ms':'—'}</div></div>`).join('');
+
+  panel.classList.add('visible');
+}
+
+function addHistory(d){
+  const c=document.getElementById('historyRows');
+  if(c.textContent.includes('No analyses')) c.innerHTML='';
+  const spam=d.spam_analysis||{};
+  const sent=d.sentiment_analysis||{};
+  const risk=d.risk_assessment||{};
+  const graph=d.graph_execution||{};
+  const txt=d.input_text||'';
+  const trunc=txt.length>50?txt.substring(0,50)+'...':txt;
+  const row=document.createElement('div');
+  row.className='history-row';
+  row.style.animation='fadeSlide .3s ease';
+  const spamP=spam.prediction||'n/a';
+  const spamCls=spamP==='spam'?'spam':spamP==='ham'?'ham':'n-a';
+  row.innerHTML=`
+    <div style="font-size:.78rem;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(trunc)}</div>
+    <div><span class="mini-badge ${spamCls}">${spamP}</span></div>
+    <div style="font-size:.76rem;color:var(--t2)">${sent.sentiment||'—'}</div>
+    <div><span class="risk-badge ${risk.risk_level||'low'}" style="font-size:.62rem">${risk.risk_level||'—'}</span></div>
+    <div style="font-family:var(--fm);font-size:.76rem;color:var(--t3)">${(graph.nodes_executed||[]).length} nodes</div>`;
+  c.prepend(row);
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+async function refreshStats(){
+  try{
+    const[h,s]=await Promise.all([fetch('/health').then(r=>r.json()),fetch('/stats').then(r=>r.json())]);
+    document.getElementById('totalPreds').textContent=s.total_analyses||0;
+    document.getElementById('spamCount').textContent=s.spam_detected||0;
+    document.getElementById('spamRate').textContent=s.total_analyses>0?(s.spam_rate*100).toFixed(0)+'% of total':'0% of total';
+    document.getElementById('avgLatency').textContent=s.avg_processing_time_ms>0?s.avg_processing_time_ms.toFixed(2):'—';
+    const m=Math.floor(h.uptime_seconds/60),sc=Math.floor(h.uptime_seconds%60);
+    document.getElementById('uptimeSub').textContent=`Uptime: ${m}m ${sc}s`;
+  }catch(e){}
+}
+
+function switchTab(el,lang){
+  document.querySelectorAll('.code-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['python','curl','stream'].forEach(l=>{document.getElementById('code-'+l).style.display=l===lang?'inline':'none'});
+}
+
+refreshStats();
+setInterval(refreshStats,5000);
+document.getElementById('inputText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))runAnalysis()});
+</script>
+</body>
+</html>
