@@ -1,6 +1,6 @@
 # 🧠 Text Analysis Agent — LangGraph + FastAPI + Python
 
-**Author:** Candace Grant · Threshold ML Solutions, LLC  
+**Author:** Candace Grant · Birds and Roses 
 **Core Stack:** LangGraph · FastAPI · Python  
 
 A multi-step AI agent with **conditional routing**, **stateful graph execution**, and **streaming node output** — built using the LangGraph pattern and served as a production API via FastAPI.
