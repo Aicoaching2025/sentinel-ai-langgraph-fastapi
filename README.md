@@ -115,24 +115,4 @@ for line in response.iter_lines():
 # ✓ compile_report — (full report JSON)
 ```
 
-## Key Interview Talking Points
 
-### LangGraph
-- **Stateful graph execution** — typed state flows through nodes, each adding its analysis
-- **Conditional routing** — intent classification determines which analysis nodes fire
-- **Node-by-node streaming** — transparent agent execution via NDJSON streaming
-- **Graph introspection** — `/graph/info` endpoint exposes full topology
-- **Why LangGraph over chains?** — Complex workflows need branching, cycles, and state management that linear chains can't handle
-
-### FastAPI
-- **Async endpoints** — non-blocking I/O for high throughput
-- **Pydantic V2 validation** — type-safe request/response at API boundary
-- **StreamingResponse** — real-time node output for agent transparency
-- **Auto-generated OpenAPI docs** — Swagger UI + ReDoc from type annotations
-- **CORS middleware** — production-ready for frontend integration
-
-### Python
-- **NLP feature engineering** — 18 features including vocabulary richness, caps ratio, entity density
-- **Regex-based NER** — dates, times, money, emails, URLs, proper nouns
-- **Sigmoid normalization** — converting raw scores to calibrated probabilities
-- **Clean architecture** — separation of graph logic, node functions, and API layer
