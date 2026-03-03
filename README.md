@@ -3,7 +3,7 @@
 **Author:** Candace Grant · Birds and Roses 
 **Core Stack:** LangGraph · FastAPI · Python  
 
-A multi-step AI agent with **conditional routing**, **stateful graph execution**, and **streaming node output** — built using the LangGraph pattern and served as a production API via FastAPI.
+### A multi-step AI agent with **conditional routing**, **stateful graph execution**, and **streaming node output** — built using the LangGraph pattern and served as a production API via FastAPI.
 Check it out here!!  https://web-production-9840f.up.railway.app/
 ---
 
