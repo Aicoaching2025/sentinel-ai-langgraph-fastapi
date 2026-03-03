@@ -1,4 +1,4 @@
-# 🧠 Text Analysis Agent — LangGraph + FastAPI + Python
+# Text Analysis Agent — LangGraph + FastAPI + Python
 
 **Author:** Candace Grant · Birds and Roses 
 **Core Stack:** LangGraph · FastAPI · Python  
